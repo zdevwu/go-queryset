@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/jinzhu/gorm"
-	forex "github.com/jirfag/go-queryset/internal/queryset/generator/test/pkgimport/forex/v1"
+	forex "github.com/zdevwu/go-queryset/internal/queryset/generator/test/pkgimport/forex/v1"
 )
 
 // ===== BEGIN of all query sets

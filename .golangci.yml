@@ -21,7 +21,17 @@ linters:
     - scopelint
     - gochecknoglobals
     - gosec
-
+    - testpackage
+    - goerr113
+    - wsl
+    - whitespace
+    - gofumpt
+    - godox
+    - godot
+    - funlen
+    - gofmt
+    - goimports
+    - misspell
 issues:
   exclude-rules:
     - linters:
@@ -30,6 +40,18 @@ issues:
     - linters:
         - staticcheck
       text: "SA9003:"
+    - linters:
+        - staticcheck
+      text: "SA1019:"
+    - linters:
+        - stylecheck
+      text: "ST1003:"
+    - linters:
+        - stylecheck
+      text: "ST1019:"
+    - linters:
+        - gomnd
+      text: "mnd:"
 
 # golangci.com configuration
 # https://github.com/golangci/golangci/wiki/Configuration

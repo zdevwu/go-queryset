@@ -1,5 +1,5 @@
 test_static:
-	golangci-lint run
+	go run github.com/golangci/golangci-lint/cmd/golangci-lint run
 
 test_unit: test_gen
 	mkdir -p test
