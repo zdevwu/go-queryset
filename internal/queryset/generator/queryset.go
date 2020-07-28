@@ -69,6 +69,7 @@ func genStructFieldInfos(s parser.ParsedStruct, types *types.Package) (ret []fie
 		if fi == nil {
 			continue
 		}
+		fi.StructName = s.TypeName
 		ret = append(ret, *fi)
 	}
 	return ret

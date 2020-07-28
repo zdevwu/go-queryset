@@ -20,6 +20,7 @@ type BaseInfo struct {
 }
 
 type Info struct {
+	StructName string
 	pointed *BaseInfo
 	BaseInfo
 	IsPointer bool

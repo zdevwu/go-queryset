@@ -20,8 +20,8 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/zdevwu/go-queryset/internal/queryset/generator/test"
 	assert "github.com/stretchr/testify/require"
+	"github.com/zdevwu/go-queryset/internal/queryset/generator/test"
 
 	sqlmock "gopkg.in/DATA-DOG/go-sqlmock.v1"
 )
@@ -115,6 +115,7 @@ func TestQueries(t *testing.T) {
 	funcs := []testQueryFunc{
 		testUserSelectAll,
 		testUserSelectAllSingleField,
+		testUserSelectAllAllFields,
 		testUserSelectAllMultipleFields,
 		testUserSelectWithLimitAndOffset,
 		testUserSelectAllNoRecords,
@@ -159,7 +160,7 @@ func testUserSelectAll(t *testing.T, m sqlmock.Sqlmock, db *gorm.DB) {
 
 func testUserSelectAllSingleField(t *testing.T, m sqlmock.Sqlmock, db *gorm.DB) {
 	expUsers := getTestUsers(2)
-	m.ExpectQuery(fixedFullRe("SELECT name FROM `users` WHERE `users`.`deleted_at` IS NULL")).
+	m.ExpectQuery(fixedFullRe("SELECT `name` FROM `users` WHERE `users`.`deleted_at` IS NULL")).
 		WillReturnRows(getRowsForUsers(expUsers))
 
 	var users []test.User
@@ -168,9 +169,22 @@ func testUserSelectAllSingleField(t *testing.T, m sqlmock.Sqlmock, db *gorm.DB) 
 	assert.Equal(t, expUsers, users)
 }
 
+func testUserSelectAllAllFields(t *testing.T, m sqlmock.Sqlmock, db *gorm.DB) {
+	expUsers := getTestUsers(2)
+	m.ExpectQuery(fixedFullRe(
+		"SELECT `id`,`created_at`,`updated_at`,`deleted_at`,`name`,`user_surname`,`email` " +
+			"FROM `users` WHERE `users`.`deleted_at` IS NULL")).
+		WillReturnRows(getRowsForUsers(expUsers))
+
+	var users []test.User
+
+	assert.Nil(t, test.NewUserQuerySet(db).Select(test.UserDBSchemaAllFields...).All(&users))
+	assert.Equal(t, expUsers, users)
+}
+
 func testUserSelectAllMultipleFields(t *testing.T, m sqlmock.Sqlmock, db *gorm.DB) {
 	expUsers := getTestUsers(2)
-	m.ExpectQuery(fixedFullRe("SELECT name,email FROM `users` WHERE `users`.`deleted_at` IS NULL")).
+	m.ExpectQuery(fixedFullRe("SELECT `name`,`email` FROM `users` WHERE `users`.`deleted_at` IS NULL")).
 		WillReturnRows(getRowsForUsers(expUsers))
 
 	var users []test.User

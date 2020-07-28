@@ -34,7 +34,7 @@ func (qs BlogQuerySet) w(db *gorm.DB) BlogQuerySet {
 func (qs BlogQuerySet) Select(fields ...BlogDBSchemaField) BlogQuerySet {
 	names := []string{}
 	for _, f := range fields {
-		names = append(names, f.String())
+		names = append(names, qs.db.Dialect().Quote(f.String()))
 	}
 
 	return qs.w(qs.db.Select(strings.Join(names, ",")))
@@ -497,6 +497,15 @@ var BlogDBSchema = struct {
 	Name:      BlogDBSchemaField("myname"),
 }
 
+var BlogDBSchemaAllFields = []BlogDBSchemaField{
+
+	BlogDBSchema.ID,
+	BlogDBSchema.CreatedAt,
+	BlogDBSchema.UpdatedAt,
+	BlogDBSchema.DeletedAt,
+	BlogDBSchema.Name,
+}
+
 // Update updates Blog fields by primary key
 // nolint: dupl
 func (o *Blog) Update(db *gorm.DB, fields ...BlogDBSchemaField) error {
@@ -562,7 +571,7 @@ func (qs CheckReservedKeywordsQuerySet) w(db *gorm.DB) CheckReservedKeywordsQuer
 func (qs CheckReservedKeywordsQuerySet) Select(fields ...CheckReservedKeywordsDBSchemaField) CheckReservedKeywordsQuerySet {
 	names := []string{}
 	for _, f := range fields {
-		names = append(names, f.String())
+		names = append(names, qs.db.Dialect().Quote(f.String()))
 	}
 
 	return qs.w(qs.db.Select(strings.Join(names, ",")))
@@ -842,6 +851,12 @@ var CheckReservedKeywordsDBSchema = struct {
 	Struct: CheckReservedKeywordsDBSchemaField("struct"),
 }
 
+var CheckReservedKeywordsDBSchemaAllFields = []CheckReservedKeywordsDBSchemaField{
+
+	CheckReservedKeywordsDBSchema.Type,
+	CheckReservedKeywordsDBSchema.Struct,
+}
+
 // Update updates CheckReservedKeywords fields by primary key
 // nolint: dupl
 func (o *CheckReservedKeywords) Update(db *gorm.DB, fields ...CheckReservedKeywordsDBSchemaField) error {
@@ -904,7 +919,7 @@ func (qs PostQuerySet) w(db *gorm.DB) PostQuerySet {
 func (qs PostQuerySet) Select(fields ...PostDBSchemaField) PostQuerySet {
 	names := []string{}
 	for _, f := range fields {
-		names = append(names, f.String())
+		names = append(names, qs.db.Dialect().Quote(f.String()))
 	}
 
 	return qs.w(qs.db.Select(strings.Join(names, ",")))
@@ -1503,6 +1518,18 @@ var PostDBSchema = struct {
 	Str:       PostDBSchemaField("str"),
 }
 
+var PostDBSchemaAllFields = []PostDBSchemaField{
+
+	PostDBSchema.ID,
+	PostDBSchema.CreatedAt,
+	PostDBSchema.UpdatedAt,
+	PostDBSchema.DeletedAt,
+	PostDBSchema.Blog,
+	PostDBSchema.User,
+	PostDBSchema.Title,
+	PostDBSchema.Str,
+}
+
 // Update updates Post fields by primary key
 // nolint: dupl
 func (o *Post) Update(db *gorm.DB, fields ...PostDBSchemaField) error {
@@ -1571,7 +1598,7 @@ func (qs UserQuerySet) w(db *gorm.DB) UserQuerySet {
 func (qs UserQuerySet) Select(fields ...UserDBSchemaField) UserQuerySet {
 	names := []string{}
 	for _, f := range fields {
-		names = append(names, f.String())
+		names = append(names, qs.db.Dialect().Quote(f.String()))
 	}
 
 	return qs.w(qs.db.Select(strings.Join(names, ",")))
@@ -2222,6 +2249,17 @@ var UserDBSchema = struct {
 	Name:      UserDBSchemaField("name"),
 	Surname:   UserDBSchemaField("user_surname"),
 	Email:     UserDBSchemaField("email"),
+}
+
+var UserDBSchemaAllFields = []UserDBSchemaField{
+
+	UserDBSchema.ID,
+	UserDBSchema.CreatedAt,
+	UserDBSchema.UpdatedAt,
+	UserDBSchema.DeletedAt,
+	UserDBSchema.Name,
+	UserDBSchema.Surname,
+	UserDBSchema.Email,
 }
 
 // Update updates User fields by primary key
