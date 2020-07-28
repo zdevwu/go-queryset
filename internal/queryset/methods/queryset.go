@@ -136,13 +136,17 @@ type BinaryFilterMethod struct {
 }
 
 // NewBinaryFilterMethod create new binary filter method
-func NewBinaryFilterMethod(ctx QsFieldContext) BinaryFilterMethod {
+func NewBinaryFilterMethod(ctx QsFieldContext, condition ...string) BinaryFilterMethod {
 	argName := fieldNameToArgName(ctx.fieldName())
+	method := ctx.onFieldMethod(condition...)
+	if len(condition) < 1 {
+		condition = append(condition, "Where")
+	}
 	return BinaryFilterMethod{
-		onFieldMethod:         ctx.onFieldMethod(),
+		onFieldMethod:         method,
 		oneArgMethod:          newOneArgMethod(argName, ctx.fieldTypeName()),
 		chainedQuerySetMethod: ctx.chainedQuerySetMethod(),
-		qsCallGormMethod: newQsCallGormMethod("Where",
+		qsCallGormMethod: newQsCallGormMethod(condition[0],
 			newMethodCall("fmt", "Sprintf", "\"%s %s\"",
 				newDBQuote(ctx.fieldDBName()), `"`+getWhereCondition(ctx.operationName)+`"`),
 			argName),
@@ -166,17 +170,21 @@ func (m InFilterMethod) GetBody() string {
 	return fmt.Sprintf(tmpl, m.getArgName(0), m.getArgName(0), m.GetMethodName()) + m.qsCallGormMethod.GetBody()
 }
 
-func newInFilterMethodImpl(ctx QsFieldContext, operationName, sql string) InFilterMethod {
+func newInFilterMethodImpl(ctx QsFieldContext, operationName, sql string, condition ...string) InFilterMethod {
 	ctx = ctx.WithOperationName(operationName)
+	method := ctx.onFieldMethod(condition...)
+	if len(condition) < 1 {
+		condition = append(condition, "Where")
+	}
 	argName := fieldNameToArgName(ctx.fieldName())
 	args := newNArgsMethod(
 		newOneArgMethod(argName, "..."+ctx.fieldTypeName()),
 	)
 	return InFilterMethod{
-		onFieldMethod:         ctx.onFieldMethod(),
+		onFieldMethod:         method,
 		nArgsMethod:           args,
 		chainedQuerySetMethod: ctx.chainedQuerySetMethod(),
-		qsCallGormMethod: newQsCallGormMethod("Where",
+		qsCallGormMethod: newQsCallGormMethod(condition[0],
 			newMethodCall("fmt", "Sprintf", "\"%s %s (?)\"",
 				newDBQuote(ctx.fieldDBName()), `"`+sql+`"`),
 			argName),
@@ -184,13 +192,13 @@ func newInFilterMethodImpl(ctx QsFieldContext, operationName, sql string) InFilt
 }
 
 // NewInFilterMethod create new IN filter method
-func NewInFilterMethod(ctx QsFieldContext) InFilterMethod {
-	return newInFilterMethodImpl(ctx, "In", "IN")
+func NewInFilterMethod(ctx QsFieldContext, condition ...string) InFilterMethod {
+	return newInFilterMethodImpl(ctx, "In", "IN", condition...)
 }
 
 // NewNotInFilterMethod create new NOT IN filter method
-func NewNotInFilterMethod(ctx QsFieldContext) InFilterMethod {
-	return newInFilterMethodImpl(ctx, "NotIn", "NOT IN")
+func NewNotInFilterMethod(ctx QsFieldContext, condition ...string) InFilterMethod {
+	return newInFilterMethodImpl(ctx, "NotIn", "NOT IN", condition...)
 }
 
 func getWhereCondition(name string) string {
@@ -220,10 +228,14 @@ type UnaryFilterMethod struct {
 	qsCallGormMethod
 }
 
-func newUnaryFilterMethod(ctx QsFieldContext, op string) UnaryFilterMethod {
+func newUnaryFilterMethod(ctx QsFieldContext, op string, condition ...string) UnaryFilterMethod {
+	method := ctx.onFieldMethod(condition...)
+	if len(condition) < 1 {
+		condition = append(condition, "Where")
+	}
 	r := UnaryFilterMethod{
-		onFieldMethod: ctx.onFieldMethod(),
-		qsCallGormMethod: newQsCallGormMethod("Where",
+		onFieldMethod: method,
+		qsCallGormMethod: newQsCallGormMethod(condition[0],
 			newMethodCall("fmt", "Sprintf", `"%s %s"`,
 				newDBQuote(ctx.fieldDBName()), `"`+op+`"`)),
 		chainedQuerySetMethod: ctx.chainedQuerySetMethod(),
@@ -409,11 +421,11 @@ func NewOneMethod(structName, qsTypeName string) SelectMethod {
 }
 
 // NewIsNullMethod create IsNull method
-func NewIsNullMethod(ctx QsFieldContext) UnaryFilterMethod {
-	return newUnaryFilterMethod(ctx.WithOperationName("IsNull"), "IS NULL")
+func NewIsNullMethod(ctx QsFieldContext, condition ...string) UnaryFilterMethod {
+	return newUnaryFilterMethod(ctx.WithOperationName("IsNull"), "IS NULL", condition...)
 }
 
 // NewIsNotNullMethod create IsNotNull method
-func NewIsNotNullMethod(ctx QsFieldContext) UnaryFilterMethod {
-	return newUnaryFilterMethod(ctx.WithOperationName("IsNotNull"), "IS NOT NULL")
+func NewIsNotNullMethod(ctx QsFieldContext, condition ...string) UnaryFilterMethod {
+	return newUnaryFilterMethod(ctx.WithOperationName("IsNotNull"), "IS NOT NULL", condition...)
 }

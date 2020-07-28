@@ -30,14 +30,19 @@ func (b *methodsBuilder) getQuerySetMethodsForField(f field.Info) []methods.Meth
 	basicTypeMethods := []methods.Method{
 		methods.NewBinaryFilterMethod(fctx.WithOperationName("eq")),
 		methods.NewBinaryFilterMethod(fctx.WithOperationName("ne")),
+		methods.NewBinaryFilterMethod(fctx.WithOperationName("eq"), "Or"),
+		methods.NewBinaryFilterMethod(fctx.WithOperationName("ne"), "Or"),
 		methods.NewOrderAscByMethod(fctx),
 		methods.NewOrderDescByMethod(fctx),
 	}
 
 	if !f.IsTime {
-		inMethod := methods.NewInFilterMethod(fctx)
-		notInMethod := methods.NewNotInFilterMethod(fctx)
-		basicTypeMethods = append(basicTypeMethods, inMethod, notInMethod)
+		basicTypeMethods = append(basicTypeMethods,
+			methods.NewInFilterMethod(fctx),
+			methods.NewNotInFilterMethod(fctx),
+			methods.NewInFilterMethod(fctx, "Or"),
+			methods.NewNotInFilterMethod(fctx, "Or"),
+		)
 	}
 
 	numericMethods := []methods.Method{
@@ -45,13 +50,19 @@ func (b *methodsBuilder) getQuerySetMethodsForField(f field.Info) []methods.Meth
 		methods.NewBinaryFilterMethod(fctx.WithOperationName("gt")),
 		methods.NewBinaryFilterMethod(fctx.WithOperationName("lte")),
 		methods.NewBinaryFilterMethod(fctx.WithOperationName("gte")),
+		methods.NewBinaryFilterMethod(fctx.WithOperationName("lt"), "Or"),
+		methods.NewBinaryFilterMethod(fctx.WithOperationName("gt"), "Or"),
+		methods.NewBinaryFilterMethod(fctx.WithOperationName("lte"), "Or"),
+		methods.NewBinaryFilterMethod(fctx.WithOperationName("gte"), "Or"),
 	}
 
 	if f.IsString {
-		likeMethod := methods.NewBinaryFilterMethod(fctx.WithOperationName("like"))
-		notLikeMethod := methods.NewBinaryFilterMethod(fctx.WithOperationName("notlike"))
-
-		methods := append(basicTypeMethods, likeMethod, notLikeMethod)
+		methods := append(basicTypeMethods,
+			methods.NewBinaryFilterMethod(fctx.WithOperationName("like")),
+			methods.NewBinaryFilterMethod(fctx.WithOperationName("notlike")),
+			methods.NewBinaryFilterMethod(fctx.WithOperationName("like"), "Or"),
+			methods.NewBinaryFilterMethod(fctx.WithOperationName("notlike"), "Or"),
+		)
 		return append(methods, numericMethods...)
 	}
 
@@ -68,7 +79,10 @@ func (b *methodsBuilder) getQuerySetMethodsForField(f field.Info) []methods.Meth
 		ptrMethods := b.getQuerySetMethodsForField(f.GetPointed())
 		return append(ptrMethods,
 			methods.NewIsNullMethod(fctx),
-			methods.NewIsNotNullMethod(fctx))
+			methods.NewIsNotNullMethod(fctx),
+			methods.NewIsNullMethod(fctx, "Or"),
+			methods.NewIsNotNullMethod(fctx, "Or"),
+		)
 	}
 
 	// it's a string

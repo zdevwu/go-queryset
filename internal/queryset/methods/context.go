@@ -3,6 +3,7 @@ package methods
 import (
 	"github.com/zdevwu/go-queryset/internal/parser"
 	"github.com/zdevwu/go-queryset/internal/queryset/field"
+	"strings"
 )
 
 type QsStructContext struct {
@@ -46,8 +47,8 @@ func (ctx QsFieldContext) fieldTypeName() string {
 	return ctx.f.TypeName
 }
 
-func (ctx QsFieldContext) onFieldMethod() onFieldMethod {
-	return newOnFieldMethod(ctx.operationName, ctx.fieldName())
+func (ctx QsFieldContext) onFieldMethod(prefix ...string) onFieldMethod {
+	return newOnFieldMethod(ctx.operationName, strings.Join(append(prefix, ctx.fieldName()), ""))
 }
 
 func (ctx QsFieldContext) chainedQuerySetMethod() chainedQuerySetMethod {
