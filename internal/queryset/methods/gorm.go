@@ -1,67 +1,49 @@
 package methods
 
-import (
-	"fmt"
-	"strings"
-)
+import "fmt"
 
 func wrapToGormScope(code string) string {
 	const tmpl = `return qs.w(%s)`
 	return fmt.Sprintf(tmpl, code)
 }
 
-// methodCall
-type methodCall struct {
-	receiver   string
-	methodName string
-	methodArgs []interface{}
+// callGormMethod
+type callGormMethod struct {
+	gormMethodName string
+	gormMethodArgs string
+	gormVarName    string
 }
 
-func (m *methodCall) setMethodName(name string) {
-	m.methodName = name
+func (m *callGormMethod) setGormMethodName(name string) {
+	m.gormMethodName = name
 }
 
-func (m methodCall) getMethodName() string {
-	return m.methodName
+func (m callGormMethod) getGormMethodName() string {
+	return m.gormMethodName
 }
 
-func (m *methodCall) setMethodArgs(args ...interface{}) {
-	m.methodArgs = args
+func (m callGormMethod) getGormMethodArgs() string {
+	return m.gormMethodArgs
 }
 
-func (m methodCall) getReceiver() string {
-	return m.receiver
+func (m *callGormMethod) setGormMethodArgs(args string) {
+	m.gormMethodArgs = args
 }
 
-func (m methodCall) GetBody() string {
-	methodArgs := make([]string, len(m.methodArgs))
-	for i, arg := range m.methodArgs {
-		switch argType := arg.(type) {
-		case string:
-			methodArgs[i] = argType
-		case methodCall:
-			methodArgs[i] = argType.GetBody()
-		default:
-			panic(argType)
-		}
-	}
+func (m callGormMethod) getGormVarName() string {
+	return m.gormVarName
+}
+
+func (m callGormMethod) GetBody() string {
 	return fmt.Sprintf("%s.%s(%s)",
-		m.getReceiver(), m.getMethodName(), strings.Join(methodArgs, ", "))
+		m.getGormVarName(), m.getGormMethodName(), m.getGormMethodArgs())
 }
 
-func newMethodCall(receiver, methodName string, methodArgs ...interface{}) methodCall {
-	return methodCall{
-		receiver:   receiver,
-		methodName: methodName,
-		methodArgs: methodArgs,
-	}
-}
-
-func newDBQuote(fieldName string) methodCall {
-	return methodCall{
-		receiver:   qsDbName,
-		methodName: "Dialect().Quote",
-		methodArgs: []interface{}{`"` + fieldName + `"`},
+func newCallGormMethod(name, args, varName string) callGormMethod {
+	return callGormMethod{
+		gormMethodName: name,
+		gormMethodArgs: args,
+		gormVarName:    varName,
 	}
 }
 
@@ -80,16 +62,16 @@ func newDbArgMethod() dbArgMethod {
 // gormErroredMethod
 type gormErroredMethod struct {
 	errorRetMethod
-	methodCall
+	callGormMethod
 }
 
 // GetBody returns body of method
 func (m gormErroredMethod) GetBody() string {
-	return "return " + m.methodCall.GetBody() + ".Error"
+	return "return " + m.callGormMethod.GetBody() + ".Error"
 }
 
 func newGormErroredMethod(name, args, varName string) gormErroredMethod {
 	return gormErroredMethod{
-		methodCall: newMethodCall(varName, name, args),
+		callGormMethod: newCallGormMethod(name, args, varName),
 	}
 }

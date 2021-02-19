@@ -3,10 +3,9 @@ package field
 import (
 	"fmt"
 	"go/types"
+	"gorm.io/gorm/schema"
 	"reflect"
 	"strings"
-
-	"github.com/jinzhu/gorm"
 )
 
 type BaseInfo struct {
@@ -21,7 +20,7 @@ type BaseInfo struct {
 
 type Info struct {
 	StructName string
-	pointed *BaseInfo
+	pointed    *BaseInfo
 	BaseInfo
 	IsPointer bool
 }
@@ -100,7 +99,7 @@ func (g InfoGenerator) GenFieldInfo(f Field) *Info {
 		return nil
 	}
 
-	dbName := gorm.ToDBName(f.Name())
+	dbName := schema.NamingStrategy{}.ColumnName("", f.Name())
 	if dbColName := tagSetting["COLUMN"]; dbColName != "" {
 		dbName = dbColName
 	}

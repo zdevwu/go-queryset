@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm/logger"
 	"log"
 	"math/rand"
 	"os"
@@ -18,10 +20,9 @@ import (
 
 	"github.com/zdevwu/go-queryset/internal/parser"
 
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
-	assert "github.com/stretchr/testify/require"
 	"github.com/zdevwu/go-queryset/internal/queryset/generator/test"
+	assert "github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 
 	sqlmock "gopkg.in/DATA-DOG/go-sqlmock.v1"
 )
@@ -38,11 +39,15 @@ func newDB() (sqlmock.Sqlmock, *gorm.DB) {
 		log.Fatalf("can't create sqlmock: %s", err)
 	}
 
-	gormDB, gerr := gorm.Open("mysql", db)
+	gormDB, gerr := gorm.Open(mysql.New(mysql.Config{
+		Conn:                      db,
+		SkipInitializeWithVersion: true,
+	}), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
 	if gerr != nil {
 		log.Fatalf("can't open gorm connection: %s", err)
 	}
-	gormDB.LogMode(true)
 
 	return mock, gormDB.Set("gorm:update_column", true)
 }

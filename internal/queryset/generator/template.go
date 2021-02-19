@@ -35,7 +35,7 @@ const qsCode = `
   func (qs {{ .Name }}) Select(fields ...{{ $ft }}) {{ .Name }} {
 	  names := []string{}
 	  for _, f := range fields {
-		  names = append(names, qs.db.Dialect().Quote(f.String()))
+		  names = append(names, f.String())
 	  }
 
 	  return qs.w(qs.db.Select(strings.Join(names, ",")))

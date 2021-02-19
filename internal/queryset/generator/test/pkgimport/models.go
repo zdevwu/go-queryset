@@ -1,6 +1,6 @@
 package models
 
-//go:generate goqueryset -in models.go
+//go:generate go run ../../../../../cmd/goqueryset/goqueryset.go -in models.go
 
 import (
 	forex "github.com/zdevwu/go-queryset/internal/queryset/generator/test/pkgimport/forex/v1"

@@ -1,7 +1,7 @@
 package test
 
 import (
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 	"github.com/zdevwu/go-queryset/internal/queryset/generator/tmp"
 )
 
