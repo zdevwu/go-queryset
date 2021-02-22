@@ -38,7 +38,7 @@ const qsCode = `
 		  names = append(names, f.String())
 	  }
 
-	  return qs.w(qs.db.Select(strings.Join(names, ",")))
+	  return qs.w(qs.db.Select(names))
   }
 
 	{{ range .Methods }}

@@ -59,6 +59,7 @@ import (
 	"strings"
 	"time"
 
+	"gorm.io/gorm/clause"
 	"gorm.io/gorm"
 )
 `

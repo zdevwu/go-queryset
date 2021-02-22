@@ -28,10 +28,10 @@ func newMethodsBuilder(s parser.ParsedStruct, fields []field.Info) *methodsBuild
 func (b *methodsBuilder) getQuerySetMethodsForField(f field.Info) []methods.Method {
 	fctx := b.sctx.FieldCtx(f)
 	basicTypeMethods := []methods.Method{
-		methods.NewBinaryFilterMethod(fctx.WithOperationName("eq")),
-		methods.NewBinaryFilterMethod(fctx.WithOperationName("ne")),
-		methods.NewBinaryFilterMethod(fctx.WithOperationName("eq"), "Or"),
-		methods.NewBinaryFilterMethod(fctx.WithOperationName("ne"), "Or"),
+		methods.NewBinaryFilterMethod(fctx.WithOperationName("eq"), false),
+		methods.NewBinaryFilterMethod(fctx.WithOperationName("ne"), false),
+		methods.NewBinaryFilterMethod(fctx.WithOperationName("eq"), false, "Or"),
+		methods.NewBinaryFilterMethod(fctx.WithOperationName("ne"), false, "Or"),
 		methods.NewOrderAscByMethod(fctx),
 		methods.NewOrderDescByMethod(fctx),
 	}
@@ -46,22 +46,22 @@ func (b *methodsBuilder) getQuerySetMethodsForField(f field.Info) []methods.Meth
 	}
 
 	numericMethods := []methods.Method{
-		methods.NewBinaryFilterMethod(fctx.WithOperationName("lt")),
-		methods.NewBinaryFilterMethod(fctx.WithOperationName("gt")),
-		methods.NewBinaryFilterMethod(fctx.WithOperationName("lte")),
-		methods.NewBinaryFilterMethod(fctx.WithOperationName("gte")),
-		methods.NewBinaryFilterMethod(fctx.WithOperationName("lt"), "Or"),
-		methods.NewBinaryFilterMethod(fctx.WithOperationName("gt"), "Or"),
-		methods.NewBinaryFilterMethod(fctx.WithOperationName("lte"), "Or"),
-		methods.NewBinaryFilterMethod(fctx.WithOperationName("gte"), "Or"),
+		methods.NewBinaryFilterMethod(fctx.WithOperationName("lt"), false),
+		methods.NewBinaryFilterMethod(fctx.WithOperationName("gt"), false),
+		methods.NewBinaryFilterMethod(fctx.WithOperationName("lte"), false),
+		methods.NewBinaryFilterMethod(fctx.WithOperationName("gte"), false),
+		methods.NewBinaryFilterMethod(fctx.WithOperationName("lt"), false, "Or"),
+		methods.NewBinaryFilterMethod(fctx.WithOperationName("gt"), false, "Or"),
+		methods.NewBinaryFilterMethod(fctx.WithOperationName("lte"), false, "Or"),
+		methods.NewBinaryFilterMethod(fctx.WithOperationName("gte"), false, "Or"),
 	}
 
 	if f.IsString {
 		methods := append(basicTypeMethods,
-			methods.NewBinaryFilterMethod(fctx.WithOperationName("like")),
-			methods.NewBinaryFilterMethod(fctx.WithOperationName("notlike")),
-			methods.NewBinaryFilterMethod(fctx.WithOperationName("like"), "Or"),
-			methods.NewBinaryFilterMethod(fctx.WithOperationName("notlike"), "Or"),
+			methods.NewBinaryFilterMethod(fctx.WithOperationName("like"), false),
+			methods.NewBinaryFilterMethod(fctx.WithOperationName("like"), true),
+			methods.NewBinaryFilterMethod(fctx.WithOperationName("like"), false, "Or"),
+			methods.NewBinaryFilterMethod(fctx.WithOperationName("like"), true, "Or"),
 		)
 		return append(methods, numericMethods...)
 	}

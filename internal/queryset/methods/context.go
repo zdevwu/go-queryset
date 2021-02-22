@@ -47,8 +47,12 @@ func (ctx QsFieldContext) fieldTypeName() string {
 	return ctx.f.TypeName
 }
 
-func (ctx QsFieldContext) onFieldMethod(prefix ...string) onFieldMethod {
-	return newOnFieldMethod(ctx.operationName, strings.Join(append(prefix, ctx.fieldName()), ""))
+func (ctx QsFieldContext) onFieldMethod(inverse bool, prefix ...string) onFieldMethod {
+	not := ""
+	if inverse {
+		not = "Not"
+	}
+	return newOnFieldMethod(ctx.operationName, strings.Join(append(prefix, ctx.fieldName(), not), ""))
 }
 
 func (ctx QsFieldContext) chainedQuerySetMethod() chainedQuerySetMethod {

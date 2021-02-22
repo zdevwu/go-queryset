@@ -1,4 +1,4 @@
-test_static:
+vet:
 	go run github.com/golangci/golangci-lint/cmd/golangci-lint run
 
 test_unit: test_gen
@@ -15,7 +15,7 @@ test_gen: gen
 		go build $$(dirname $F)/*.go; \
 	)
 
-test: test_unit bench test_static
+test: test_unit bench
 
 bench:
 	go test -bench=. -benchtime=1s -v -run=^$$ ./internal/queryset/generator/

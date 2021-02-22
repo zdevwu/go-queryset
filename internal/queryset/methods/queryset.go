@@ -85,7 +85,7 @@ func newFieldOperationNoArgsMethod(ctx QsFieldContext, transformFieldName bool) 
 	}
 
 	r := FieldOperationNoArgsMethod{
-		onFieldMethod:         ctx.onFieldMethod(),
+		onFieldMethod:         ctx.onFieldMethod(false),
 		qsCallGormMethod:      newQsCallGormMethod(ctx.operationName, `"%s"`, gormArgName),
 		chainedQuerySetMethod: ctx.chainedQuerySetMethod(),
 	}
@@ -141,18 +141,22 @@ type BinaryFilterMethod struct {
 }
 
 // NewBinaryFilterMethod create new binary filter method
-func NewBinaryFilterMethod(ctx QsFieldContext, condition ...string) BinaryFilterMethod {
+func NewBinaryFilterMethod(ctx QsFieldContext, inverse bool, condition ...string) BinaryFilterMethod {
 	argName := fieldNameToArgName(ctx.fieldName())
-	method := ctx.onFieldMethod(condition...)
+	method := ctx.onFieldMethod(inverse, condition...)
 	if len(condition) < 1 {
 		condition = append(condition, "Where")
+	}
+	clause := "clause.%s{Column: \"%s\", Value: %s }"
+	if inverse {
+		clause = fmt.Sprintf("clause.Not(%s)", clause)
 	}
 	return BinaryFilterMethod{
 		onFieldMethod:         method,
 		oneArgMethod:          newOneArgMethod(argName, ctx.fieldTypeName()),
 		chainedQuerySetMethod: ctx.chainedQuerySetMethod(),
-		qsCallGormMethod: newQsCallGormMethod(condition[0], "\"%s %s\", %s",
-			ctx.fieldDBName(), getWhereCondition(ctx.operationName), argName),
+		qsCallGormMethod: newQsCallGormMethod(condition[0], clause,
+			getWhereCondition(ctx.operationName), ctx.fieldDBName(), argName),
 	}
 }
 
@@ -166,16 +170,21 @@ type InFilterMethod struct {
 
 func (m InFilterMethod) GetBody() string {
 	tmpl := `if len(%s) == 0 {
-	qs.db.AddError(errors.New("must at least pass one %s in %s"))
-	return qs.w(qs.db)
+		qs.db.AddError(errors.New("must at least pass one %s in %s"))
+		return qs.w(qs.db)
+	}
+	values := make([]interface{}, len(%s))
+	for i, s := range %s {
+		values[i] = s
 	}
 	`
-	return fmt.Sprintf(tmpl, m.getArgName(0), m.getArgName(0), m.GetMethodName()) + m.qsCallGormMethod.GetBody()
+	argName := m.getArgName(0)
+	return fmt.Sprintf(tmpl, argName, m.getArgName(0), m.GetMethodName(), argName, argName) + m.qsCallGormMethod.GetBody()
 }
 
-func newInFilterMethodImpl(ctx QsFieldContext, operationName, sql string, condition ...string) InFilterMethod {
+func newInFilterMethodImpl(ctx QsFieldContext, operationName string, inverse bool, condition ...string) InFilterMethod {
 	ctx = ctx.WithOperationName(operationName)
-	method := ctx.onFieldMethod(condition...)
+	method := ctx.onFieldMethod(inverse, condition...)
 	if len(condition) < 1 {
 		condition = append(condition, "Where")
 	}
@@ -183,42 +192,44 @@ func newInFilterMethodImpl(ctx QsFieldContext, operationName, sql string, condit
 	args := newNArgsMethod(
 		newOneArgMethod(argName, "..."+ctx.fieldTypeName()),
 	)
+	clause := "clause.IN{Column: \"%s\", Values: values }"
+	if inverse {
+		clause = fmt.Sprintf("clause.Not(%s)", clause)
+	}
 	return InFilterMethod{
 		onFieldMethod:         method,
 		nArgsMethod:           args,
 		chainedQuerySetMethod: ctx.chainedQuerySetMethod(),
-		qsCallGormMethod: newQsCallGormMethod(condition[0], "\"%s %s (?)\", %s",
-			ctx.fieldDBName(), sql, argName),
+		qsCallGormMethod:      newQsCallGormMethod(condition[0], clause, ctx.fieldDBName()),
 	}
 }
 
 // NewInFilterMethod create new IN filter method
 func NewInFilterMethod(ctx QsFieldContext, condition ...string) InFilterMethod {
-	return newInFilterMethodImpl(ctx, "In", "IN", condition...)
+	return newInFilterMethodImpl(ctx, "In", false, condition...)
 }
 
 // NewNotInFilterMethod create new NOT IN filter method
 func NewNotInFilterMethod(ctx QsFieldContext, condition ...string) InFilterMethod {
-	return newInFilterMethodImpl(ctx, "NotIn", "NOT IN", condition...)
+	return newInFilterMethodImpl(ctx, "In", true, condition...)
 }
 
 func getWhereCondition(name string) string {
 	nameToOp := map[string]string{
-		"eq":      "=",
-		"ne":      "!=",
-		"lt":      "<",
-		"lte":     "<=",
-		"gt":      ">",
-		"gte":     ">=",
-		"like":    "LIKE",
-		"notlike": "NOT LIKE",
+		"eq":   "Eq",
+		"ne":   "Neq",
+		"lt":   "Lt",
+		"lte":  "Lte",
+		"gt":   "Gt",
+		"gte":  "Gte",
+		"like": "Like",
 	}
 	op := nameToOp[name]
 	if op == "" {
 		log.Fatalf("no operation for filter %q", name)
 	}
 
-	return fmt.Sprintf("%s ?", op)
+	return op
 }
 
 // UnaryFilterMethod represents unary filter
@@ -230,7 +241,7 @@ type UnaryFilterMethod struct {
 }
 
 func newUnaryFilterMethod(ctx QsFieldContext, op string, condition ...string) UnaryFilterMethod {
-	method := ctx.onFieldMethod(condition...)
+	method := ctx.onFieldMethod(false, condition...)
 	if len(condition) < 1 {
 		condition = append(condition, "Where")
 	}
@@ -297,7 +308,7 @@ func NewDeleteMethod(qsTypeName, structTypeName string) DeleteMethod {
 
 		namedMethod:        newNamedMethod("Delete"),
 		baseQuerySetMethod: newBaseQuerySetMethod(qsTypeName),
-		gormErroredMethod:  newGormErroredMethod("Delete", structTypeName+"{}", qsDbName),
+		gormErroredMethod:  newGormErroredMethod("Delete", "&"+structTypeName+"{}", qsDbName),
 	}
 }
 
@@ -319,7 +330,7 @@ func NewDeleteNumMethod(qsTypeName, structTypeName string) DeleteNumMethod {
 		constRetMethod:     newConstRetMethod("(int64, error)"),
 		constBodyMethod: newConstBodyMethod(
 			strings.Join([]string{
-				"db := qs.db.Delete(" + structTypeName + "{}" + ")",
+				"db := qs.db.Delete(&" + structTypeName + "{}" + ")",
 				"return db.RowsAffected, db.Error",
 			}, "\n"),
 		),
@@ -344,7 +355,7 @@ func NewDeleteNumUnscopedMethod(qsTypeName, structTypeName string) DeleteNumUnsc
 		constRetMethod:     newConstRetMethod("(int64, error)"),
 		constBodyMethod: newConstBodyMethod(
 			strings.Join([]string{
-				"db := qs.db.Unscoped().Delete(" + structTypeName + "{}" + ")",
+				"db := qs.db.Unscoped().Delete(&" + structTypeName + "{}" + ")",
 				"return db.RowsAffected, db.Error",
 			}, "\n"),
 		),
